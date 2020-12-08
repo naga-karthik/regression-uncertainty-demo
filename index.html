@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Regression with Dropout Uncertainty</title>
+    <script src="build/jquery.min.js"></script>
+<!--    <script src="build/convnet-min.js"></script>-->  <!-- this version of convnet.js does not work for the demo -->
+    <script src="build/convnet.js"></script>    <!-- this version is copied from YG's repo. This works -->
+    <script src="build/npgmain.js"></script>
+    <script src="build/util.js"></script>
+    <script src="build/vis.js"></script>
+    <script src="regression.js"></script>
+    <!-- Maths -->
+    <script type="text/javascript" src='https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.4/MathJax.js?config=default'></script>
+<!--    <script src="reg_final.js"></script>-->
+    <style type="text/css">
+        canvas {border: 1px solid gray;}
+    </style>
+</head>
+<body style="font-family: Arial, 'Times New Roman', serif;">
+    <h2 style="text-align: center"> Interactive Demo for Visualizing Uncertainty in Regression with Dropout</h2>
+        <p>
+        Below is an interactive demo that performs linear regression using a simple fully connected neural network with dropout. The network has 2 hidden layers
+        with 15 and 25 neurons each and dropout applied before each weight layer. The uncertainty estimates are plotted - the black (highly-flickering) line
+        showing the current stochastic forward pass through the network, the blue line showing the predictive mean after averaging over 150 stochastic forward
+        passes, and finally, the different shades of green showing two-thirds a predictive standard deviation of the estimated outputs.
+        <br>
+        Feel free to experiment with the demo by using the buttons provided in the right panel. Some interesting things:
+            <ul>
+                <li> Select different non-linearity activation functions to visualize how the uncertainty estimates change (similar to changing the
+                    covariance function parameters in Gaussian Processes). </li>
+                <li> Tweak the dropout probability ratio for observing varying amounts of uncertainty (Go ahead and set \(p=0\) and see what happens!). </li>
+                <li> Experiment with the different function options provided </li>
+    </ul>
+        </p>
+<!--    <p>-->
+<!--     <div style="margin-left: auto; margin-right: auto; width: 720px">-->
+
+    <table>
+        <tr>
+            <td>
+        <div style="margin-left: 50px; width: 720px">
+                <canvas id="NPGcanvas" width="720" height="480" style="background-image: url('polarised_news.jpeg'); background-size: cover; opacity:0.4">Browser not supported for Canvas. Get a real browser.>
+                </canvas>
+        </div>
+            </td>
+            <td>
+        <div style="margin-right: 2cm; float: right;">
+                Number of Points (N): <input type="text" name="num_points" id="num_data" value="20">
+                <input type="submit" value="Regenerate Data" style="height: 30px" onclick="regenerate_data();">
+        </div>
+                <br> <br>
+        <div style="margin-right: 2cm; float: right;">
+                Dropout Probability (p): <input type="text" name="drop_data" id="drop_prob" value="0.05">
+                <input type="submit" value="Retrain Network" style="height: 30px" onclick="restart_net();">
+                <p style="text-align: center; margin: 0.5em" >Note: Smaller the better!</p>
+        </div>
+        <div style="margin-left: 2cm; float: left;">
+                Which Non-linearity?:
+            <input type="checkbox" name="non_linearity" id="nl_relu"
+                   onclick="$('#nl_sigmoid').prop('checked', false); $('#nl_tanh').prop('checked', false); restart_net();" checked><label for="nl_relu">ReLU</label>
+            <input type="checkbox" name="non_linearity" id="nl_sigmoid"
+                   onclick="$('#nl_relu').prop('checked', false); $('#nl_tanh').prop('checked', false); restart_net();"><label for="nl_sigmoid">Sigmoid</label>
+            <input type="checkbox" name="non_linearity" id="nl_tanh"
+                   onclick="$('#nl_relu').prop('checked', false); $('#nl_sigmoid').prop('checked', false); restart_net();"><label for="nl_tanh">TanH</label>
+            <br><br>
+        </div>
+
+        <div style="margin-left: 2cm; float: left;">
+                Function options : <br>
+            <input type="checkbox" name="func_data" id="func_1" value="1"
+                   onclick="$('#func_2').prop('checked', false); $('#func_3').prop('checked', false); regenerate_data();" checked><label for="func_1">\( f(x) = x \sin(x) \)</label>
+            <br>
+            <br>
+<!--            <input type="checkbox" name="func_2_data" id="func_2"-->
+<!--                   onclick="if($('#func_1').is(':checked')){-->
+<!--                       $('#func_1').prop('checked', false)-->
+<!--                   } regenerate_data();"><label for="func_2">\( f(x) = x^2 + 3x \sin(x) \)</label> <br>-->
+            <input type="checkbox" name="func_data" id="func_2" value="2"
+                   onclick="$('#func_1').prop('checked', false); $('#func_3').prop('checked', false); regenerate_data();"><label for="func_2">\( f(x) = \sin(2x) - 2\sin(x) \)</label>
+            <br>
+            <br>
+            <input type="checkbox" name="func_data" id="func_3" value="3"
+                   onclick="$('#func_1').prop('checked', false); $('#func_2').prop('checked', false); regenerate_data();"><label for="func_3">\( f(x) = x^2 \cos(x) \sin(x) \)</label>
+        </div>
+
+        <br><br><br><br><br><br><br><br><br><br><br><br><br>
+        <div style="float: left;">
+        <ul>
+            <table>
+                <tr>
+<!--                    <td>-->
+            <a href="javascript:show_reg();" class="myStartButton">Start</a><br>
+            <a href="javascript:regenerate_data();" class="button alt">Regenerate Data</a> <br>
+<!--                    </td>-->
+<!--                    <td>-->
+			<a href="javascript:restart_net();" class="button alt">Retrain network</a> <br>
+			<a href="javascript:hide_reg();" class="myStopButton">Stop</a> <br>
+<!--                    </td>-->
+<!--            <li style="margin: 1em"><input type="checkbox" id="show_mean" name="show_mean"><label for="show_mean">Show Mean</label></li>-->
+<!--            <li><input type="radio" id="data_simple" name="data" onclick="javascript:if(!$('#is_heteroscedastic').is(':checked')){$('#show_uncertainty').prop('checked', false)};regen_data_v2()" checked><label for="data_simple">$y = x \sin x$</label></li>-->
+                </tr>
+            </table>
+        </ul>
+        </div>
+            </td>
+        </tr>
+    </table>
+    <p>
+        This demo is heavily inspired by Yarin Gal's blog article: <a href="http://www.cs.ox.ac.uk/people/yarin.gal/website/blog_3d801aa532c1ce.html">
+        What My Deep Model Doesn't Know</a>, and the famous JavaScript framework
+        <a href="https://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a>, by Andrej Karpathy.
+    </p>
+<!--    </p>-->
+    <script>
+        show_reg = function (){
+            $(NPGcanvas).css('opacity', 1);
+            $(NPGcanvas).css('background-image', '');
+	    	NPGinit(15);    // this is the FPS at which the animations will run.
+        };
+        hide_reg = function (){
+            $(NPGcanvas).css('opacity', 0.5);
+            $(NPGcanvas).css('background-image', 'url("polarised_news.jpeg")');
+            window.clearInterval(NPG_interval);
+            ctx_reg.clearRect(0, 0, WIDTH, HEIGHT);
+        };
+    </script>
+
+    <style type="text/css">
+        .myStartButton {
+            /*box-shadow: 0px 10px 14px -7px #3e7327;*/
+            background: #77b55a linear-gradient(to bottom, #77b55a 5%, #72b352 100%);
+            border-radius: 5px;
+            border:1px solid #4b8f29;
+            display: block;
+            text-align: center;
+            cursor:pointer;
+            color:#ffffff;
+            font-family:Arial,serif;
+            font-size:16px;
+            font-weight:bold;
+            padding:6px 12px;
+            text-decoration:none;
+        }
+        .button {
+            display: block;
+            width: 150px;
+            height: 15px;
+            background: #4E9CAF;
+            padding: 10px;
+            text-align: center;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            line-height: 15px;
+            text-decoration: none;
+        }
+        .myStopButton {
+            /*box-shadow: 0px 10px 14px -7px #73272d;*/
+            background: #e84343 linear-gradient(to bottom, #e84343 5%, #e84343 100%);
+            border-radius: 5px;
+            border:1px solid #e84343;
+            display:block;
+            cursor:pointer;
+            color:#ffffff;
+            text-align: center;
+            font-family:Arial,serif;
+            font-size:16px;
+            font-weight:bold;
+            padding:6px 12px;
+            text-decoration:none;
+        }
+    </style>
+
+</body>
+</html>
