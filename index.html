@@ -25,12 +25,15 @@
         showing the current stochastic forward pass through the network, the blue line showing the predictive mean after averaging over 150 stochastic forward
         passes, and finally, the different shades of green showing two-thirds a predictive standard deviation of the estimated outputs.
         <br>
-        Feel free to experiment with the demo by using the buttons provided in the right panel. Some interesting things:
+        Feel free to experiment with the demo by using the buttons provided in the right panel. Some interesting things you can observe:
             <ul>
                 <li> Select different non-linearity activation functions to visualize how the uncertainty estimates change (similar to changing the
                     covariance function parameters in Gaussian Processes). </li>
-                <li> Tweak the dropout probability ratio for observing varying amounts of uncertainty (Go ahead and set \(p=0\) and see what happens!). </li>
-                <li> Experiment with the different function options provided </li>
+                <li> Tweak the dropout probability ratio for observing varying amounts of uncertainty (Go ahead, set \(p=0\), wait for a few seconds, and see what happens!).
+                    <br>
+                    Note: The network is quite small, so setting standard dropout probabilities as we do in typical deep networks might make it quite handicapped to even learn anything!
+                </li>
+                <li> Experiment with the different function options provided. </li>
     </ul>
         </p>
 <!--    <p>-->
@@ -39,8 +42,8 @@
     <table>
         <tr>
             <td>
-        <div style="margin-left: 50px; width: 720px">
-                <canvas id="NPGcanvas" width="720" height="480" style="background-image: url('polarised_news.jpeg'); background-size: cover; opacity:0.4">Browser not supported for Canvas. Get a real browser.>
+        <div style="margin-left: 50px; width: 700px">
+                <canvas id="NPGcanvas" width="700" height="500" style="background-image: url('polarised_news.jpeg'); background-size: cover; opacity:0.4">Browser not supported for Canvas. Get a real browser.>
                 </canvas>
         </div>
             </td>

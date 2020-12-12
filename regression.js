@@ -153,7 +153,7 @@ function draw_reg(){
     drop_prob_val = parseFloat($('#drop_prob').val());
     wgt_decay = 1e-5;
     tau = (l2*(1 - drop_prob_val))/(2*N*wgt_decay);
-    tau_inv = tau**(-1)
+    tau_inv = tau**(-1);
     // tau_inv = (2 * N * 0.00001) / (1 - 0.05) / l2;
 
     for(var i = 1; i <= uncertainty_slabs; i++) {
