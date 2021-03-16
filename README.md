@@ -1,2 +1,2 @@
 ### regression-uncertainty-demo
-Interactive demo for showing uncertainty in regression.
+Interactive [demo](https://naga-karthik.github.io/regression-uncertainty-demo/) for showing uncertainty in regression.
